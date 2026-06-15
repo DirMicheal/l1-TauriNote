@@ -2,27 +2,10 @@ import React, { useEffect, useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
 import TreeNode from './TreeNode';
+import { getStorage, setStorage } from "../../utils/storage";
  
 let filePath = ""
 
-
-function getStorage(key: string): string | null {
-  try {
-    return window.localStorage.getItem(key);
-  } catch (error) {
-    console.error("获取 localStorage 失败:", error);
-    return null;
-  }
-}
-
-
-function setStorage(key: string, value: string): void {
-  try {
-    window.localStorage.setItem(key, value);
-  } catch (error) {
-    console.error("设置 localStorage 失败:", error);
-  }
-}
 
 interface TreeFileProps {
   // @ts-ignore

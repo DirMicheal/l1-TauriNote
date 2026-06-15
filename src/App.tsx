@@ -14,30 +14,18 @@ import DownloadMenu from "./components/PopMenu/DownloadMenu";
 
 
 
-function getStorage(key: string): string | null {
-  try {
-    return window.localStorage.getItem(key);
-  } catch (error) {
-    console.error("获取 localStorage 失败:", error);
-    return null;
-  }
+interface FileData {
+  content: string;
+  type: string;
+  path: string;
+  fileName: string;
 }
 
-// @ts-ignore
-function setStorage(key: string, value: string): void {
-  try {
-    window.localStorage.setItem(key, value);
-  } catch (error) {
-    console.error("设置 localStorage 失败:", error);
-  }
-}
-
-function App() { 
+function App() {
   const [isShow, setIsShow] =  useState<boolean>(true);
   const [fileType, setFileType] =  useState<string>("md");
-  // @ts-ignore
-  const [fileName, setFileName] = useState<string>("");
-  const [content, setContent] = useState<any>( );
+  const [, setFileName] = useState<string>("");
+  const [content, setContent] = useState<string | null>(null);
   const [filePath, setFilePath] = useState<string>("");
   const [screenHeight, setScreenHeight] = useState(window.innerHeight);
  
@@ -55,26 +43,16 @@ function App() {
       };
     }, []);
     
-    // @ts-ignore
-const hadleSide = (bool:boolean) => {
-  const result:any = getStorage("filePath") 
-  setFilePath(result);
-  setIsShow(bool); 
-}
-
-const setFileContent=  async (data:any)=>{
+const setFileContent=  async (data:string)=>{
   if(  data && filePath){   
     await invoke("write_file_content", { path: filePath, content: data });
   }
 }
 
-// @ts-ignore
-const onReadFile = (data)=>{ 
- // @ts-ignore
+const onReadFile = (data: FileData)=>{
  setFileName(data.fileName)
  setFileType(data.type)
- // @ts-ignore
- setFilePath(data.path||"" ); 
+ setFilePath(data.path||"" );
  setContent("")
   setTimeout(() => {
    setContent(data.content)
@@ -114,7 +92,7 @@ const contentHeight = `${screenHeight - 30}px`;
           <div className="flex overflow-hidden" style={{ height: contentHeight} }>
             {
                isShow&& <div className="Sider w-2/6 max-w-64 pl-2 pr-2 pt-3 border-r border-gray-300 ">
-               <TreeFile onDeleteRefresh={onDeleteRefresh} onReadFile={(data) => onReadFile(data)} />
+               <TreeFile onDeleteRefresh={onDeleteRefresh} onReadFile={(data) => onReadFile(data as FileData)} />
              </div>
             } 
                <div   className="w-full h-full relative overflow-hidden overflow-y-auto  ">
