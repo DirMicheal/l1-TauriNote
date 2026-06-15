@@ -1,19 +1,15 @@
 // 导出工具函数
 import { message } from 'antd';
-// @ts-ignore
 import { saveAs } from 'file-saver';
 
 // 获取当前编辑器内容
 const getCurrentContent = async (format: 'html' | 'markdown') => {
   // 通过全局编辑器实例获取内容
-  // @ts-ignore
   if (window.editor) {
     try {
       if (format === 'html') {
-        // @ts-ignore
         return await window.editor.blocksToHTMLLossy(window.editor.document);
       } else {
-        // @ts-ignore
         return await window.editor.blocksToMarkdownLossy(window.editor.document);
       }
     } catch (error) {
