@@ -1,17 +1,17 @@
 // 导入必要的库
 import { message } from 'antd'; // 用于显示提示信息
- import generateMultiPagePDF from "./multiPagePDF"
+import generateMultiPagePDF from "./multiPagePDF"
+import processMarkdownTable from "./processMarkdownTable";
 
 /**
  * 处理下载事件的函数 - 增强版，解决空白PDF问题
  */
-const handleDownload = async (options: any = {}) => {
+const handleDownload = async (options: Partial<PdfExportOptions> = {}) => {
   // 创建唯一的消息键，避免消息冲突
   const loadingKey = `pdf-loading-${Date.now()}`;
   
   try {
     // 检查编辑器实例是否存在
-    // @ts-ignore
     if(!window.editor) {
       message.error('找不到编辑器内容');
       return;
@@ -23,14 +23,10 @@ const handleDownload = async (options: any = {}) => {
     
     // 从编辑器获取HTML内容 - 增强版，确保捕获所有内容
     let html = '';
-    // @ts-ignore
-    let contentSource = 'primary'; // 跟踪内容来源，用于调试
     
     try {
       // 主要方法：使用blocksToHTMLLossy
-      // @ts-ignore
       if (window.editor?.blocksToHTMLLossy) {
-        // @ts-ignore
         html = await window.editor.blocksToHTMLLossy(window.editor.document) || '';
          
         
@@ -98,21 +94,17 @@ const handleDownload = async (options: any = {}) => {
       }
     } catch (htmlError) {
       console.error('主方法获取HTML内容失败:', htmlError);
-      contentSource = 'backup';
       
       // 备用方法1：使用blocksToMarkdownLossy
       try {
-        // @ts-ignore
         if (window.editor?.blocksToMarkdownLossy) {
-          // @ts-ignore
           const markdown = await window.editor.blocksToMarkdownLossy(window.editor.document) || '';
           if (markdown && markdown.trim().length > 0) {
             // 增强版Markdown转HTML，更好地处理表格和格式
             const enhancedHtml = [];
             const lines = markdown.split('\n');
             let inTable = false;
-            // @ts-ignore
-            let tableContent = [];
+            let tableContent: string[] = [];
             
             for (let i = 0; i < lines.length; i++) {
               const line = lines[i];
@@ -130,7 +122,6 @@ const handleDownload = async (options: any = {}) => {
                 // 检测表格结束
                 if (!lines[i + 1] || !lines[i + 1].includes('|')) {
                   // 处理表格
-                  // @ts-ignore
                   const tableHtml = processMarkdownTable(tableContent);
                   enhancedHtml.push(tableHtml);
                   inTable = false;
@@ -141,7 +132,8 @@ const handleDownload = async (options: any = {}) => {
               
               // 处理标题
               if (line.trim().startsWith('#')) {
-                const level = line.match(/^#+/)[0].length;
+                const match = line.match(/^#+/);
+                const level = match ? match[0].length : 1;
                 const text = line.replace(/^#+\s+/, '');
                 enhancedHtml.push(`<h${level} style="page-break-after: avoid; margin-top: 1em; margin-bottom: 0.5em; font-weight: bold;">${text}</h${level}>`);
               }
@@ -167,7 +159,6 @@ const handleDownload = async (options: any = {}) => {
         }
       } catch (backupError) {
         console.error('备用方法1也失败:', backupError);
-        contentSource = 'fallback';
         
         // 备用方法2：直接获取DOM内容
         try {
@@ -196,7 +187,6 @@ const handleDownload = async (options: any = {}) => {
           }
         } catch (domError) {
           console.error('所有获取内容方法均失败:', domError);
-          contentSource = 'empty';
           
           // 最后的备用方法：创建一个简单的内容
           html = `<div style="background-color: #FFFFFF; color: #000000; padding: 20px; font-family: Arial, sans-serif;">

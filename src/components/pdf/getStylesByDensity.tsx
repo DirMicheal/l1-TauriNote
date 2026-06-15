@@ -1,7 +1,9 @@
-import { PDF_CONFIG } from './config';
-const getStylesByDensity = (density: string = 'normal') => {
+// 基于密度的样式配置函数 - 纯函数，不修改全局状态
+type Density = 'compact' | 'normal' | 'comfortable';
+
+const getStylesByDensity = (density: Density = 'normal') => {
     // 基于密度调整边距和行高
-    let pageMargin = PDF_CONFIG.pageMargin;
+    let pageMargin = 10; // 默认值（与 PDF_CONFIG.pageMargin 一致）
     let lineHeight = '1.6';
     let fontSize = '12pt';
     let elementMargin = '0.5em';
@@ -12,7 +14,7 @@ const getStylesByDensity = (density: string = 'normal') => {
     let imgMargin = '20px auto';
     let listMargin = '0.5em 0';
     let cellPadding = '1.5mm';
-    
+
     // 根据密度调整样式
     switch(density) {
       case 'compact':
@@ -42,11 +44,7 @@ const getStylesByDensity = (density: string = 'normal') => {
         cellPadding = '2mm'; // 增加单元格内边距
         break;
     }
-    
-    // 更新配置
-    PDF_CONFIG.pageMargin = pageMargin;
-    PDF_CONFIG.contentWidth = 210 - (pageMargin * 2); // 重新计算内容宽度
-    
+
     return {
       lineHeight,
       fontSize,
@@ -57,7 +55,9 @@ const getStylesByDensity = (density: string = 'normal') => {
       tableMargin,
       imgMargin,
       listMargin,
-      cellPadding
+      cellPadding,
+      pageMargin,
+      contentWidth: 210 - (pageMargin * 2)
     };
   };
 

@@ -233,7 +233,6 @@ const   Editor: React.FC<EditorProps> = ({content,onChange,type='md'})=>{
       );
   }, [editor]);
 
-  // @ts-ignore
   window.editor = editor;
 
   return  <BlockNoteView editor={editor} slashMenu={false} onChange={handleChange} formattingToolbar={false}>

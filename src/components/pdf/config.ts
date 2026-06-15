@@ -1,4 +1,6 @@
+// 导入必要的库
 import getStylesByDensity from './getStylesByDensity';
+
 // PDF生成配置常量
 export const PDF_CONFIG = {
     pageSize: 'a4' as const,       // PDF页面尺寸
@@ -13,18 +15,21 @@ export const PDF_CONFIG = {
     density: 'normal' as 'compact' | 'normal' | 'comfortable' // 内容密度
   };
 
+// 配置类型 - 从 PDF_CONFIG 推导
+export type PDFConfig = typeof PDF_CONFIG;
+
 // 打印容器的样式配置
-export const getPrintContainerStyle = (): Record<string, string> => { 
+export const getPrintContainerStyle = (config: PDFConfig = PDF_CONFIG): Record<string, string> => {
     return {
       position: 'absolute',         // 绝对定位避免影响原页面布局
       left: '-9999px',               // 移出可视区域，避免闪烁
       top: '-9999px',                // 移出可视区域，避免闪烁
-      width: `${PDF_CONFIG.contentWidth}mm`, // 固定内容宽度
-      padding: `${PDF_CONFIG.pageMargin}mm`, // 内边距与PDF页边距一致
+      width: `${config.contentWidth}mm`, // 固定内容宽度
+      padding: `${config.pageMargin}mm`, // 内边距与PDF页边距一致
       boxSizing: 'border-box',       // 盒模型计算方式
       backgroundColor: '#fff',       // 白色背景
-      fontSize: getStylesByDensity(PDF_CONFIG.density).fontSize, // 基于密度的字体大小
-      lineHeight: getStylesByDensity(PDF_CONFIG.density).lineHeight, // 基于密度的行高
+      fontSize: getStylesByDensity(config.density).fontSize, // 基于密度的字体大小
+      lineHeight: getStylesByDensity(config.density).lineHeight, // 基于密度的行高
       fontFamily: "'Arial', sans-serif", // 首选字体
       visibility: 'hidden',          // 隐藏容器，避免闪烁
       zIndex: '-1000',               // 确保在最底层
@@ -33,23 +38,24 @@ export const getPrintContainerStyle = (): Record<string, string> => {
   };
 
 
-  // 定义打印容器样式常量，供后续使用
+  // 定义打印容器样式常量，供后续使用（使用默认配置）
   export const PRINT_CONTAINER_STYLE = getPrintContainerStyle();
 
   // 等待元素布局完成
   export const waitForLayout = () => new Promise(resolve => requestAnimationFrame(resolve));
 
 // 毫米到像素的转换函数
-export const mmToPx = (mm: number): number => {
+export const mmToPx = (mm: number, config: PDFConfig = PDF_CONFIG): number => {
   // 转换公式：(毫米值 / 25.4) * DPI * 缩放因子
-  return (mm / 25.4) * PDF_CONFIG.dpi * PDF_CONFIG.scaleFactor;
+  return (mm / 25.4) * config.dpi * config.scaleFactor;
 };
 
 
-// 获取基于密度的样式
-const densityStyles = getStylesByDensity(PDF_CONFIG.density);
+// 获取基于密度的HTML样式字符串
+export const getHtmlStyles = (config: PDFConfig): string => {
+  const densityStyles = getStylesByDensity(config.density);
 
-export const htmlStyles =  `
+  return `
 /* 基础样式 */
 * {
   box-sizing: border-box;
@@ -153,7 +159,7 @@ a {
   text-decoration: underline;
 }
 
- 
+
 
 /* 引用样式 */
 blockquote {
@@ -194,4 +200,8 @@ div:empty {
   visibility: visible !important;
   display: block;
 }
-`
+`;
+};
+
+// 向后兼容的默认 htmlStyles（使用默认配置）
+export const htmlStyles = getHtmlStyles(PDF_CONFIG);
