@@ -141,7 +141,7 @@ const handleDownload = async (options: any = {}) => {
               
               // 处理标题
               if (line.trim().startsWith('#')) {
-                const level = line.match(/^#+/)[0].length;
+                const level = line.match(/^#+/)![0].length;
                 const text = line.replace(/^#+\s+/, '');
                 enhancedHtml.push(`<h${level} style="page-break-after: avoid; margin-top: 1em; margin-bottom: 0.5em; font-weight: bold;">${text}</h${level}>`);
               }

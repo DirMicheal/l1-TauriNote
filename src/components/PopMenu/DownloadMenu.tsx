@@ -1,15 +1,22 @@
- 
-import type { MenuProps } from 'antd'; 
+
+import type { MenuProps } from 'antd';
 import TeenyiconsPdfOutline from '../../assets/TeenyiconsPdfOutline.svg';
 import handleDownload from '../pdf';
-// @ts-ignore
-import { message, Modal, Radio, Button, Space } from 'antd';
+import { Modal, Radio, Button, Space } from 'antd';
 import { useState } from 'react';
 import { exportToHTML, exportToMarkdown } from '../../utils/exportUtils';
 import markdownSVG from "../../assets/TablerMarkdown.svg"
 import Html5 from "../../assets/LogosHtml5.svg"
+
+// PDF导出选项接口
+interface PdfExportOptionsData {
+  quality: string;
+  pageSize: string;
+  density: string;
+}
+
 // PDF导出选项组件
-const PdfExportOptions = ({ onExport, onCancel }: { onExport: (options: any) => void, onCancel: () => void }) => {
+const PdfExportOptions = ({ onExport, onCancel }: { onExport: (options: PdfExportOptionsData) => void, onCancel: () => void }) => {
   const [quality, setQuality] = useState('high');
   const [pageSize, setPageSize] = useState('a4');
   const [density, setDensity] = useState('normal');
@@ -58,16 +65,13 @@ const PdfExportOptions = ({ onExport, onCancel }: { onExport: (options: any) => 
 
 // 处理PDF导出的函数
 const handlePdfExport = () => {
-  let exportOptions = null;
-  
   Modal.confirm({
     title: '导出PDF',
-    content: <PdfExportOptions 
+    content: <PdfExportOptions
       onExport={(options) => {
-        exportOptions = options;
         Modal.destroyAll();
-        // 使用选项调用导出函数
-        handleDownload(exportOptions);
+        if (!options) return;
+        handleDownload(options);
       }}
       onCancel={() => Modal.destroyAll()}
     />,
