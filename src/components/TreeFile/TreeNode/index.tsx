@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import { invoke } from '@tauri-apps/api/core';
 
 // 定义节点类型
-interface FileNode {
+export interface FileNode {
   name: string;
   is_dir: boolean;
   children: FileNode[];

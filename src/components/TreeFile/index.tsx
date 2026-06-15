@@ -2,31 +2,20 @@ import React, { useEffect, useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
 import TreeNode from './TreeNode';
- 
+import type { FileNode } from './TreeNode';
+import { getStorage, setStorage } from '../../utils/storage';
+
 let filePath = ""
 
-
-function getStorage(key: string): string | null {
-  try {
-    return window.localStorage.getItem(key);
-  } catch (error) {
-    console.error("获取 localStorage 失败:", error);
-    return null;
-  }
-}
-
-
-function setStorage(key: string, value: string): void {
-  try {
-    window.localStorage.setItem(key, value);
-  } catch (error) {
-    console.error("设置 localStorage 失败:", error);
-  }
+interface FileData {
+  content: string;
+  type: string;
+  path: string;
+  fileName: string;
 }
 
 interface TreeFileProps {
-  // @ts-ignore
-  onReadFile:({content:string,type:string}) => void; 
+  onReadFile:(data: FileData) => void;
   onDeleteRefresh: () => void;
 }
 
@@ -54,7 +43,7 @@ function getFileDetails(filePath: string): { fileName: string; type: string } {
 
 
 const TreeFile: React.FC<TreeFileProps> = ({onReadFile,onDeleteRefresh}) => {
-    const [fileTree, setFileTree] = useState(null); 
+    const [fileTree, setFileTree] = useState<FileNode | null>(null);
 
     
     const handleOpenFolder = async () => {  
@@ -65,15 +54,12 @@ const TreeFile: React.FC<TreeFileProps> = ({onReadFile,onDeleteRefresh}) => {
       
        
       if (selected) {
-       
-          // @ts-ignore
+
           setStorage("filePath", selected);
-          // @ts-ignore
-          filePath =  selected 
-          const tree = await invoke('get_filtered_file_tree', { path: selected }); 
-          // @ts-ignore
-          setFileTree(tree);
-       
+          filePath = selected
+          const tree = await invoke('get_filtered_file_tree', { path: selected });
+          setFileTree(tree as FileNode);
+
       }
     } catch (error) {
       console.error("获取文件树失败:", error);
@@ -81,10 +67,9 @@ const TreeFile: React.FC<TreeFileProps> = ({onReadFile,onDeleteRefresh}) => {
     };
   
     const getTree = async () => {
-       const path =  getStorage("filePath")
-      const tree = await invoke('get_filtered_file_tree', { path  }); 
-      // @ts-ignore
-      setFileTree(tree);
+       const path = getStorage("filePath")
+       const tree = await invoke('get_filtered_file_tree', { path });
+       setFileTree(tree as FileNode);
     }
     useEffect(() => {
       getTree()
@@ -95,18 +80,16 @@ const TreeFile: React.FC<TreeFileProps> = ({onReadFile,onDeleteRefresh}) => {
     if (!filePath) return;    
     try { 
       const tree = await invoke('get_filtered_file_tree', { path: filePath });
-      // @ts-ignore
-      setFileTree(tree);  
+      setFileTree(tree as FileNode);
     } catch (error) {
       alert(`刷新失败: ${error}`);
     }
   };
 
-  const read_file_content = async (path: string) => { 
-    const type = getFileDetails(path) 
-    const content = await  invoke('read_file_content', { path }) 
-    // @ts-ignore
-    onReadFile({content, ...type,path}); 
+  const read_file_content = async (path: string) => {
+    const type = getFileDetails(path)
+    const content = await invoke('read_file_content', { path }) as string;
+    onReadFile({content, ...type, path});
   }
 
     return (
