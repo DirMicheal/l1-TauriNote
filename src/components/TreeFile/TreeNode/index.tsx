@@ -1,10 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
-// @ts-ignore
-import PropTypes from 'prop-types';
 import { invoke } from '@tauri-apps/api/core';
 
 // 定义节点类型
-interface FileNode {
+export interface FileNode {
   name: string;
   is_dir: boolean;
   children: FileNode[];
@@ -29,8 +27,7 @@ interface CreatingState {
 }
 
 // 文件图标映射
-// @ts-ignore
-const getFileIcon = (filename: string) => { 
+const getFileIcon = (_filename: string) => {
   return   '📄';
 };
 
@@ -92,7 +89,7 @@ const TreeNode = ({ node, depth = 0, onRefresh ,onRead,onDeleteRefresh}: TreeNod
   }, [creatingItem.isCreating]);
 
   // 文件操作统一处理
-  const handleFileOperation = async (operation: string, args: any) => {
+  const handleFileOperation = async (operation: string, args: Record<string, unknown>) => {
     try {
       closeContextMenu()
       await invoke(operation, args);
@@ -324,18 +321,6 @@ const TreeNode = ({ node, depth = 0, onRefresh ,onRead,onDeleteRefresh}: TreeNod
       )}
     </div>
   );
-};
-
-// Prop类型校验
-TreeNode.propTypes = {
-  node: PropTypes.shape({
-    name: PropTypes.string.isRequired,
-    is_dir: PropTypes.bool.isRequired,
-    children: PropTypes.array.isRequired,
-    full_path: PropTypes.string.isRequired,
-  }).isRequired,
-  depth: PropTypes.number,
-  onRefresh: PropTypes.func.isRequired
 };
 
 export default TreeNode;

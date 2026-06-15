@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
-import TreeNode from './TreeNode';
- 
+import TreeNode, { type FileNode } from './TreeNode';
+
 let filePath = ""
 
 
@@ -25,21 +25,20 @@ function setStorage(key: string, value: string): void {
 }
 
 interface TreeFileProps {
-  // @ts-ignore
-  onReadFile:({content:string,type:string}) => void; 
+  onReadFile: (file: { content: string; type: string; path: string; fileName: string }) => void;
   onDeleteRefresh: () => void;
 }
 
 function getFileDetails(filePath: string): { fileName: string; type: string } {
   // 替换 Windows 风格的反斜杠为正斜杠，统一处理
   const normalizedPath = filePath.replace(/\\/g, '/');
-  
+
   // 使用正斜杠分割路径，取最后一部分作为文件名（带扩展名）
   const fileNameWithExtension = normalizedPath.split('/').pop() || '';
-  
+
   // 分割文件名和扩展名
   const parts = fileNameWithExtension.split('.');
-  
+
   // 如果文件名中没有点（没有扩展名），则返回完整文件名和空扩展名
   if (parts.length === 1) {
       return { fileName: parts[0], type: '' };
@@ -54,36 +53,33 @@ function getFileDetails(filePath: string): { fileName: string; type: string } {
 
 
 const TreeFile: React.FC<TreeFileProps> = ({onReadFile,onDeleteRefresh}) => {
-    const [fileTree, setFileTree] = useState(null); 
+    const [fileTree, setFileTree] = useState<FileNode | null>(null);
 
-    
-    const handleOpenFolder = async () => {  
+
+    const handleOpenFolder = async () => {
       try {
       const selected = await open({    directory: true,   multiple: false,   title: "选择笔记文件夹"     });
-       
-    
-      
-       
+
+
+
+
       if (selected) {
-       
-          // @ts-ignore
+
           setStorage("filePath", selected);
-          // @ts-ignore
-          filePath =  selected 
-          const tree = await invoke('get_filtered_file_tree', { path: selected }); 
-          // @ts-ignore
+          filePath = selected;
+          const tree = await invoke<FileNode>('get_filtered_file_tree', { path: selected });
           setFileTree(tree);
-       
+
       }
     } catch (error) {
       console.error("获取文件树失败:", error);
     }
     };
-  
+
     const getTree = async () => {
-       const path =  getStorage("filePath")
-      const tree = await invoke('get_filtered_file_tree', { path  }); 
-      // @ts-ignore
+      const path = getStorage("filePath");
+      if (!path) return;
+      const tree = await invoke<FileNode>('get_filtered_file_tree', { path });
       setFileTree(tree);
     }
     useEffect(() => {
@@ -91,28 +87,26 @@ const TreeFile: React.FC<TreeFileProps> = ({onReadFile,onDeleteRefresh}) => {
     })
 
       // 统一的刷新方法
-  const refreshTree = async () => {  
-    if (!filePath) return;    
-    try { 
-      const tree = await invoke('get_filtered_file_tree', { path: filePath });
-      // @ts-ignore
-      setFileTree(tree);  
+  const refreshTree = async () => {
+    if (!filePath) return;
+    try {
+      const tree = await invoke<FileNode>('get_filtered_file_tree', { path: filePath });
+      setFileTree(tree);
     } catch (error) {
       alert(`刷新失败: ${error}`);
     }
   };
 
-  const read_file_content = async (path: string) => { 
-    const type = getFileDetails(path) 
-    const content = await  invoke('read_file_content', { path }) 
-    // @ts-ignore
-    onReadFile({content, ...type,path}); 
+  const read_file_content = async (path: string) => {
+    const type = getFileDetails(path)
+    const content = await invoke<string>('read_file_content', { path })
+    onReadFile({content, ...type, path});
   }
 
     return (
       <div >
         <div className="bg-[#18181B] rounded-lg text-center h-8 flex items-center justify-center" onClick={handleOpenFolder}>
-            <button className="text-white text-sm font-bold" >打开笔记</button>  
+            <button className="text-white text-sm font-bold" >打开笔记</button>
         </div>
         <div className=" h-[calc(100vh-45vh)] overflow-y-auto overflow-hidden">
         {fileTree && <TreeNode onDeleteRefresh={onDeleteRefresh} node={fileTree} onRefresh={refreshTree} onRead={read_file_content} />}
@@ -120,7 +114,7 @@ const TreeFile: React.FC<TreeFileProps> = ({onReadFile,onDeleteRefresh}) => {
       </div>
     );
   }
-  
- 
+
+
 
 export default TreeFile;

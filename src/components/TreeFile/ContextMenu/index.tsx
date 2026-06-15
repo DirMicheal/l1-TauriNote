@@ -1,15 +1,24 @@
-// ContextMenu.jsx
+// ContextMenu.tsx
 import { useEffect, useRef } from 'react';
-// @ts-ignore
-export const ContextMenu = ({ position, items, onClose }) => {
-  const menuRef = useRef(null);
+
+interface ContextMenuItem {
+  label: string;
+  action: () => void;
+}
+
+interface ContextMenuProps {
+  position: { x: number; y: number };
+  items: ContextMenuItem[];
+  onClose: () => void;
+}
+
+export const ContextMenu = ({ position, items, onClose }: ContextMenuProps) => {
+  const menuRef = useRef<HTMLDivElement>(null);
 
   // 点击外部关闭菜单
   useEffect(() => {
-    // @ts-ignore
-    const handleClickOutside = (e) => {
-        // @ts-ignore
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         onClose();
       }
     };
@@ -29,7 +38,6 @@ export const ContextMenu = ({ position, items, onClose }) => {
         zIndex: 1000
       }}
     >
-        {/* @ts-ignore */}
       {items.map((item, index) => (
         <div
           key={index}
