@@ -1,6 +1,6 @@
  
-// 封装函数：将文件转换为Base64
-const useConvertFileToBase64 = ( file: File ): Promise<string | null> => {
+// 封装函数：将文件转换为Base64（普通函数，非 React Hook）
+const convertFileToBase64 = ( file: File ): Promise<string | null> => {
     return new Promise((resolve, reject) => {
       // 检查是否为图片文件
       if (!file.type.startsWith("image/")) {
@@ -20,4 +20,4 @@ const useConvertFileToBase64 = ( file: File ): Promise<string | null> => {
       reader.readAsDataURL(file);
     });
   };
-export default useConvertFileToBase64
+export default convertFileToBase64

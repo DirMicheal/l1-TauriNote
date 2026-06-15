@@ -5,7 +5,7 @@ import "@blocknote/core/fonts/inter.css";
 import "./index.css"
 import { RiAlertFill,RiText } from "react-icons/ri";
 import { BlockNoteView } from "@blocknote/mantine";
-import useConvertFileToBase64 from "../../utils/convertFileToBase64"
+import convertFileToBase64 from "../../utils/convertFileToBase64"
 import { useCreateBlockNote,SuggestionMenuController,  getDefaultReactSlashMenuItems,
 
   BasicTextStyleButton,
@@ -20,19 +20,19 @@ import { useCreateBlockNote,SuggestionMenuController,  getDefaultReactSlashMenuI
   TextAlignButton,
   UnnestBlockButton,
   useBlockNoteEditor,
-  useComponentsContext, 
+  useComponentsContext,
+  type DefaultReactSuggestionItem,
 
-} from "@blocknote/react"; 
+} from "@blocknote/react";
 import { getMultiColumnSlashMenuItems,  multiColumnDropCursor, locales as multiColumnLocales, withMultiColumn } from "@blocknote/xl-multi-column";
-import { BlockNoteSchema, defaultBlockSpecs, filterSuggestionItems, insertOrUpdateBlock,locales,combineByGroup, defaultStyleSpecs } from "@blocknote/core";
+import { BlockNoteSchema, defaultBlockSpecs, filterSuggestionItems, insertOrUpdateBlock, locales, combineByGroup, defaultStyleSpecs, type PartialBlock } from "@blocknote/core";
 import JSON5 from 'json5';
 import { useMemo } from "react";
 import Font from "./Blocks/Fonts"; 
  
 
 
-// @ts-ignore
-function safeParse(input) {
+function safeParse(input: string): PartialBlock[] | null {
   try {
     // 预处理：修复常见格式问题
     const sanitized = input
@@ -42,8 +42,12 @@ function safeParse(input) {
       // 为属性名添加双引号
       .replace(/([{,]\s*)(\w+)(\s*:)/g, '$1"$2"$3');
 
-    // 使用JSON5解析
-    return JSON5.parse(sanitized);
+    // 使用JSON5解析；JSON5.parse 返回 any，这里用类型守卫确保结果是数组
+    const parsed: unknown = JSON5.parse(sanitized);
+    if (Array.isArray(parsed)) {
+      return parsed as PartialBlock[];
+    }
+    return null;
   } catch (error) {
     console.error('解析失败:', error);
     return null;
@@ -61,7 +65,9 @@ const $schema = BlockNoteSchema.create({
   });
    
   // Slash menu item to insert an Alert block
-  const insertAlert = (editor: typeof $schema.BlockNoteEditor) => ({
+  const insertAlert = (
+    editor: typeof $schema.BlockNoteEditor
+  ): DefaultReactSuggestionItem => ({
     title: "Alert", //Alert
     onItemClick: () => {
       insertOrUpdateBlock(editor, {
@@ -78,32 +84,30 @@ const $schema = BlockNoteSchema.create({
       "success",
     ],
     group: "Other",
-    // @ts-ignore
     icon: <RiAlertFill />,
   });
  
 
-  async function uploadFile(file: File) {
-    if (!file) return;
+  async function uploadFile(file: File): Promise<string> {
+    if (!file) return "";
 
     const body = new FormData();
     body.append("file", file); 
-    if(file.type.includes("image")){ 
-      const base64 = await useConvertFileToBase64(file); 
-      return base64;
-    } 
+    if(file.type.includes("image")){
+      const base64 = await convertFileToBase64(file);
+      return base64 ?? "";
+    }
 
 
     return "";
   }
 
   interface EditorProps {
-    content: any;  
+    content: string | PartialBlock[];
     type?: string;
-    onChange: (content: any) => void;
-  } 
+    onChange: (content: string | PartialBlock[]) => void;
+  }
 
-  // @ts-ignore
   const SetFontStyleButton = () => {
     const editor = useBlockNoteEditor<
       typeof $schema.blockSchema,
@@ -117,7 +121,6 @@ const $schema = BlockNoteSchema.create({
       <Components.FormattingToolbar.Button
         label="Set Font"
         mainTooltip={"Set Font"}
-        // @ts-ignore
         icon={<RiText />}
         onClick={() => {
           const fontName = prompt("Enter a font name") || "Comic Sans MS";
@@ -141,24 +144,24 @@ const   Editor: React.FC<EditorProps> = ({content,onChange,type='md'})=>{
       multi_column: multiColumnLocales.zh,
     },
     dropCursor: multiColumnDropCursor,
-    // @ts-ignore
-    schema: withMultiColumn(BlockNoteSchema.create($schema)), 
-    // initialContent: content , 
-   // @ts-ignore
+    schema: withMultiColumn(BlockNoteSchema.create($schema)),
+    // initialContent: content ,
     uploadFile
   });
  
-// @ts-ignore
   const inserts = [
-    // @ts-ignore
-    insertAlert(editor)
+    // editor 实际带有多列(column/columnList) schema，而 insertAlert 针对 $schema
+    // (不含多列) 编写，二者结构不完全重叠；此处通过断言桥接，运行时无影响。
+    insertAlert(editor as unknown as typeof $schema.BlockNoteEditor)
   ]
 
 
   
-  async function markdownInputChanged() {  
-    const blocks = await editor.tryParseMarkdownToBlocks(content); 
-    editor.replaceBlocks(editor.document, blocks); 
+  async function markdownInputChanged() {
+    // tryParseMarkdownToBlocks 仅接受字符串内容
+    if (typeof content !== "string") return;
+    const blocks = await editor.tryParseMarkdownToBlocks(content);
+    editor.replaceBlocks(editor.document, blocks);
   }
 
 
@@ -167,10 +170,11 @@ const   Editor: React.FC<EditorProps> = ({content,onChange,type='md'})=>{
   async function initialContent(){ 
   
     try {
-      // 确保 content 是一个有效的 PartialBlock[] 数组
-      const parsedData = safeParse(content);
-      if(editor && content){  
-        editor.replaceBlocks(editor.document,parsedData);
+      // content 可能是 JSON 字符串，也可能已经是 PartialBlock[]
+      const parsedData =
+        typeof content === "string" ? safeParse(content) : content;
+      if (editor && content && parsedData) {
+        editor.replaceBlocks(editor.document, parsedData);
       }
     } catch (error) {
       console.error("Error inserting blocks:", error);
@@ -188,7 +192,7 @@ const   Editor: React.FC<EditorProps> = ({content,onChange,type='md'})=>{
         onChange(markdown)
         break;
       case "json": 
-        onChange(editor.document)
+        onChange(editor.document as PartialBlock[])
         break;
       case "html": 
         onChange(html)
@@ -233,7 +237,6 @@ const   Editor: React.FC<EditorProps> = ({content,onChange,type='md'})=>{
       );
   }, [editor]);
 
-  // @ts-ignore
   window.editor = editor;
 
   return  <BlockNoteView editor={editor} slashMenu={false} onChange={handleChange} formattingToolbar={false}>
