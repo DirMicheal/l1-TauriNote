@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+    font-family: "DingTalkJinBuTi-Regular"; /* 定义字体名称 */
+    src: url("./assets/fonts/DingTalkJinBuTi-Regular.ttf") format("truetype"); /* 指定字体文件路径和格式 */
+}
+
+html,body,#root{
+    margin: 0;
+    padding: 0; 
+    height: 100vh;
+    width: 100vw;
+    font-family: "DingTalkJinBuTi-Regular", sans-serif !important; /* 使用自定义字体，并提供备用字体 */
+}
+
+
+
+@media print {
+    .pdf-page {
+      page-break-after: always;
+      break-after: page;
+    }
+  
+    .avoid-break {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+  
+    table {
+      break-inside: auto !important;
+    }
+  
+    tr {
+      break-inside: avoid;
+      break-after: auto;
+    }
+  
+    thead {
+      display: table-header-group;
+    }
+  }
