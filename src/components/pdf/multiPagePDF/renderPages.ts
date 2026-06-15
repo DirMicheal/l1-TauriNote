@@ -15,8 +15,7 @@ import addCanvasToPDF from "./addCanvasToPDF"
 const renderPages = async (
     container: HTMLElement,
     pdf: jsPDF,
-    // @ts-ignore
-    pageBreaks: number[],
+    _pageBreaks: number[],
     totalPages: number,
     progressKey: string
   ): Promise<void> => {

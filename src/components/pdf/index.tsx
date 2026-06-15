@@ -1,17 +1,18 @@
 // 导入必要的库
 import { message } from 'antd'; // 用于显示提示信息
  import generateMultiPagePDF from "./multiPagePDF"
+import processMarkdownTable from "./processMarkdownTable";
+import type { PdfExportOptions } from "./types";
 
 /**
  * 处理下载事件的函数 - 增强版，解决空白PDF问题
  */
-const handleDownload = async (options: any = {}) => {
+const handleDownload = async (options: PdfExportOptions = {}) => {
   // 创建唯一的消息键，避免消息冲突
   const loadingKey = `pdf-loading-${Date.now()}`;
   
   try {
     // 检查编辑器实例是否存在
-    // @ts-ignore
     if(!window.editor) {
       message.error('找不到编辑器内容');
       return;
@@ -28,9 +29,7 @@ const handleDownload = async (options: any = {}) => {
     
     try {
       // 主要方法：使用blocksToHTMLLossy
-      // @ts-ignore
       if (window.editor?.blocksToHTMLLossy) {
-        // @ts-ignore
         html = await window.editor.blocksToHTMLLossy(window.editor.document) || '';
          
         
@@ -102,17 +101,14 @@ const handleDownload = async (options: any = {}) => {
       
       // 备用方法1：使用blocksToMarkdownLossy
       try {
-        // @ts-ignore
         if (window.editor?.blocksToMarkdownLossy) {
-          // @ts-ignore
           const markdown = await window.editor.blocksToMarkdownLossy(window.editor.document) || '';
           if (markdown && markdown.trim().length > 0) {
             // 增强版Markdown转HTML，更好地处理表格和格式
             const enhancedHtml = [];
             const lines = markdown.split('\n');
             let inTable = false;
-            // @ts-ignore
-            let tableContent = [];
+            let tableContent: string[] = [];
             
             for (let i = 0; i < lines.length; i++) {
               const line = lines[i];
@@ -130,7 +126,6 @@ const handleDownload = async (options: any = {}) => {
                 // 检测表格结束
                 if (!lines[i + 1] || !lines[i + 1].includes('|')) {
                   // 处理表格
-                  // @ts-ignore
                   const tableHtml = processMarkdownTable(tableContent);
                   enhancedHtml.push(tableHtml);
                   inTable = false;
@@ -141,7 +136,8 @@ const handleDownload = async (options: any = {}) => {
               
               // 处理标题
               if (line.trim().startsWith('#')) {
-                const level = line.match(/^#+/)[0].length;
+                const headingMatch = line.match(/^#+/);
+                const level = headingMatch ? headingMatch[0].length : 1;
                 const text = line.replace(/^#+\s+/, '');
                 enhancedHtml.push(`<h${level} style="page-break-after: avoid; margin-top: 1em; margin-bottom: 0.5em; font-weight: bold;">${text}</h${level}>`);
               }

@@ -2,6 +2,7 @@
 import jsPDF from "jspdf"; // 生成PDF文件
 import { message } from "antd"; // 用于显示提示信息
 import applyExportOptions from "./applyExportOptions";
+import type { PdfExportOptions } from "../types";
 import createPrintContainer from "../createPrintContainer";
 import createPDFInstance from "./createPDFInstance";
 import calculateTotalPagesAndBreaks from "./calculateTotalPagesAndBreaks";
@@ -12,9 +13,8 @@ import renderPages from "./renderPages";
  * @param options 导出选项
  * @returns 包含多页内容的PDF对象
  */
-const generateMultiPagePDF = async (html: string, options: any = {}): Promise<jsPDF> => {
-    // @ts-ignore
-    const exportOptions = applyExportOptions(options);
+const generateMultiPagePDF = async (html: string, options: PdfExportOptions = {}): Promise<jsPDF> => {
+    applyExportOptions(options);
     const container = await createPrintContainer(html);
     const pdf = createPDFInstance();
     const { pageBreaks, totalPages } = calculateTotalPagesAndBreaks(container);

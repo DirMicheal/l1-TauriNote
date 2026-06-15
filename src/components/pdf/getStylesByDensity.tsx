@@ -1,7 +1,6 @@
-import { PDF_CONFIG } from './config';
-const getStylesByDensity = (density: string = 'normal') => {
-    // 基于密度调整边距和行高
-    let pageMargin = PDF_CONFIG.pageMargin;
+const getStylesByDensity = (density: 'compact' | 'normal' | 'comfortable' = 'normal') => {
+    // 基于密度调整边距和行高（normal 的默认页边距为 10mm）
+    let pageMargin = 10;
     let lineHeight = '1.6';
     let fontSize = '12pt';
     let elementMargin = '0.5em';
@@ -43,11 +42,12 @@ const getStylesByDensity = (density: string = 'normal') => {
         break;
     }
     
-    // 更新配置
-    PDF_CONFIG.pageMargin = pageMargin;
-    PDF_CONFIG.contentWidth = 210 - (pageMargin * 2); // 重新计算内容宽度
+    // 计算派生的内容宽度（不再修改全局 PDF_CONFIG，保持函数纯净）
+    const contentWidth = 210 - (pageMargin * 2);
     
     return {
+      pageMargin,
+      contentWidth,
       lineHeight,
       fontSize,
       elementMargin,

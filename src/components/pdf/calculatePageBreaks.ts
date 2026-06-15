@@ -22,12 +22,9 @@ const calculatePageBreaks = (container: HTMLElement): number[] => {
       table.style.tableLayout = 'fixed'; // 固定表格布局，防止内容溢出
       
       // 处理表格内的单元格
-      table.querySelectorAll('td, th').forEach(cell => {
-        // @ts-ignore
+      table.querySelectorAll<HTMLElement>('td, th').forEach(cell => {
         cell.style.border = '0.5mm solid #000';
-        // @ts-ignore
         cell.style.padding = '1.5mm';
-        // @ts-ignore
         cell.style.wordBreak = 'break-word'; // 确保长文本自动换行
       });
     });

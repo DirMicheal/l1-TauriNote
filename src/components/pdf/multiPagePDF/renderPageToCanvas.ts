@@ -6,8 +6,7 @@ import html2canvas from "html2canvas"; // 将HTML转换为Canvas
  * @param includedElements 已包含的元素数组
  * @returns 渲染后的Canvas
  */
-// @ts-ignore
-const renderPageToCanvas = async (pageContainer: HTMLElement, includedElements: Element[]): Promise<HTMLCanvasElement> => {
+const renderPageToCanvas = async (pageContainer: HTMLElement, _includedElements: Element[]): Promise<HTMLCanvasElement> => {
  
  
     // 确保容器已添加到DOM并可见
@@ -171,27 +170,18 @@ hr {
           }
   
           // 处理克隆文档中的pre和code元素，但不移除它们
-          const styleTextElements = clonedDoc.querySelectorAll('pre, code');
+          const styleTextElements = clonedDoc.querySelectorAll<HTMLElement>('pre, code');
           styleTextElements.forEach(el => {
             if (el.textContent && (el.textContent.includes('<style') || el.textContent.includes('@tailwind'))) {
               // 不移除元素，而是添加样式使其正确显示
-              // @ts-ignore
               el.style.backgroundColor = '#f5f5f5';
-              // @ts-ignore
               el.style.padding = '10px';
-              // @ts-ignore
               el.style.borderRadius = '4px';
-              // @ts-ignore
               el.style.fontFamily = 'monospace';
-              // @ts-ignore
               el.style.fontSize = '12px';
-              // @ts-ignore
               el.style.lineHeight = '1.4';
-              // @ts-ignore
               el.style.whiteSpace = 'pre-wrap';
-              // @ts-ignore
               el.style.wordBreak = 'break-word';
-              // @ts-ignore
               el.style.color = '#333333';
             }
           });

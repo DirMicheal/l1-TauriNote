@@ -1,26 +1,31 @@
 import { PDF_CONFIG } from "../config";
+import getStylesByDensity from "../getStylesByDensity";
+import type { PdfExportOptions, ResolvedPdfExportOptions } from "../types";
+
 /**
- * 应用导出选项并更新配置
+ * 应用导出选项并更新全局 PDF_CONFIG
  * @param options 用户提供的导出选项
- * @returns 应用后的导出选项
- */ 
-const applyExportOptions = (options: any): any => {
-    // 根据传入的quality参数，设置导出质量
-  const exportOptions = {
+ * @returns 解析后的导出选项（quality 为 0-1 的数值）
+ */
+const applyExportOptions = (options: PdfExportOptions): ResolvedPdfExportOptions => {
+  // 根据传入的 quality 档位换算为 0-1 的数值，缺省为高质量
+  const exportOptions: ResolvedPdfExportOptions = {
     quality: options.quality === 'low' ? 0.7 : options.quality === 'medium' ? 0.85 : 0.95,
     pageSize: options.pageSize || 'a4',
-    // 如果传入的density参数存在，则使用传入的值，否则使用默认值'normal'
     density: options.density || 'normal'
   };
 
-  // 将导出质量设置到PDF_CONFIG对象中
+  // 将解析后的选项写入全局配置
   PDF_CONFIG.quality = exportOptions.quality;
-  // 将导出页面大小设置到PDF_CONFIG对象中，并指定类型为'a4'
-  PDF_CONFIG.pageSize = exportOptions.pageSize as 'a4';
-  // 将导出密度设置到PDF_CONFIG对象中，并指定类型为'compact' | 'normal' | 'comfortable'
-  PDF_CONFIG.density = exportOptions.density as 'compact' | 'normal' | 'comfortable';
+  PDF_CONFIG.pageSize = exportOptions.pageSize;
+  PDF_CONFIG.density = exportOptions.density;
 
-  // 返回导出选项对象
+  // 依据密度更新页边距与内容宽度。getStylesByDensity 现为纯函数，
+  // 由此处统一写回全局配置，避免渲染过程中出现竞态。
+  const densityStyles = getStylesByDensity(exportOptions.density);
+  PDF_CONFIG.pageMargin = densityStyles.pageMargin;
+  PDF_CONFIG.contentWidth = densityStyles.contentWidth;
+
   return exportOptions;
 };
 

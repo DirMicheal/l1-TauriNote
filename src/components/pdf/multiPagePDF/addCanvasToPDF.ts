@@ -78,9 +78,7 @@ const addCanvasToPDF = async (pdf: jsPDF, canvas: HTMLCanvasElement, pageIndex: 
         }
         
         // 帮助垃圾回收释放临时Canvas
-        // @ts-ignore
         tempCanvas.width = 0;
-        // @ts-ignore
         tempCanvas.height = 0;
       }
   
